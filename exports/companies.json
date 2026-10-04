@@ -9,7 +9,10 @@
       {
         "period": "2026, 6 месяцев",
         "value": 17,
-        "outlook": "STA"
+        "outlook": "STA",
+        "promptVersion": 1,
+        "model": "claude-opus-5-5",
+        "analyzedAt": "2026-10-04"
       }
     ],
     "reportType": 4
