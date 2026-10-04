@@ -1,0 +1,31 @@
+[project]
+name = "grind-t-e-disclosure"
+version = "0.1.0"
+description = "Pull MSFO reports from e-disclosure.ru"
+authors = [
+    { name = "grind-t", email = "grindt.gd@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "brotli>=1.2.0",
+    "patchright>=1.63.0",
+]
+
+[project.scripts]
+e-disclosure = "e_disclosure.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "e_disclosure"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.10",
+    "ty>=0.0.84",
+]
