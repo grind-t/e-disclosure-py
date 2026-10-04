@@ -1,15 +1,46 @@
 import argparse
 import asyncio
 import json
+import re
 import shutil
 import subprocess
+import sys
 import tempfile
+from datetime import date
 from pathlib import Path
 
 import brotli
 from patchright.async_api import async_playwright
 
 from e_disclosure.get_latest_msfo_report import MsfoReport, get_latest_msfo_report
+
+RATING_SCALE = [
+    "D",
+    "C",
+    "CC-",
+    "CC",
+    "CC+",
+    "CCC-",
+    "CCC",
+    "CCC+",
+    "B-",
+    "B",
+    "B+",
+    "BB-",
+    "BB",
+    "BB+",
+    "BBB-",
+    "BBB",
+    "BBB+",
+    "A-",
+    "A",
+    "A+",
+    "AA-",
+    "AA",
+    "AA+",
+    "AAA",
+]
+OUTLOOKS = ["STA", "POS", "NEG", "DEV"]
 
 
 def main() -> None:
@@ -27,12 +58,33 @@ def main() -> None:
         "export-ratings", help="собрать ratings.json.br из companies.json"
     )
 
+    set_rating_parser = subparsers.add_parser(
+        "set-rating", help="записать рейтинг компании в companies.json"
+    )
+    set_rating_parser.add_argument("inn")
+    set_rating_parser.add_argument("--period", required=True)
+    set_rating_parser.add_argument("--rating", required=True, help="например ruA-")
+    set_rating_parser.add_argument("--outlook", required=True, choices=OUTLOOKS)
+    set_rating_parser.add_argument("--prompt-version", type=int, required=True)
+    set_rating_parser.add_argument("--model", required=True)
+
     args = parser.parse_args()
 
-    if args.command == "pull-report":
-        asyncio.run(pull_msfo_report(args.inn, args.exports_dir, args.session_dir))
-    else:
-        export_ratings(args.exports_dir)
+    match args.command:
+        case "pull-report":
+            asyncio.run(pull_msfo_report(args.inn, args.exports_dir, args.session_dir))
+        case "export-ratings":
+            export_ratings(args.exports_dir)
+        case "set-rating":
+            set_rating(
+                args.inn,
+                args.period,
+                args.rating,
+                args.outlook,
+                args.prompt_version,
+                args.model,
+                args.exports_dir,
+            )
 
 
 async def pull_msfo_report(inn: str, exports_dir: Path, session_dir: Path) -> None:
@@ -90,6 +142,59 @@ def update_company(inn: str, report: MsfoReport, exports_dir: Path) -> None:
         inn, {"id": report.company_id, "ratings": [], "reportType": report.type}
     )
     company["ratings"].append({"period": report.period, "value": 0, "outlook": ""})
+
+    companies_path.write_text(
+        json.dumps(companies, ensure_ascii=False, indent=2) + "\n"
+    )
+
+
+def rating_to_value(rating: str) -> int:
+    match = re.fullmatch(r"(?:ru)?([A-D]{1,3}[+-]?)", rating.strip(), re.IGNORECASE)
+    grade = match.group(1).upper() if match else None
+    if grade not in RATING_SCALE:
+        sys.exit(f"Неизвестный рейтинг: {rating}")
+    return RATING_SCALE.index(grade)
+
+
+def period_key(period: str) -> tuple[int, int]:
+    match = re.fullmatch(r"(\d{4})(?:, (\d+) месяц\w*)?", period)
+    if not match:
+        raise ValueError(f"Неизвестный формат периода: {period}")
+    return int(match.group(1)), int(match.group(2) or 12)
+
+
+def set_rating(
+    inn: str,
+    period: str,
+    rating: str,
+    outlook: str,
+    prompt_version: int,
+    model: str,
+    exports_dir: Path,
+) -> None:
+    companies_path = exports_dir / "companies.json"
+    companies = json.loads(companies_path.read_text())
+
+    company = companies.get(inn)
+    if company is None:
+        sys.exit(f"Компании {inn} нет в companies.json, сначала запустите pull-report")
+
+    entry = {
+        "period": period,
+        "value": rating_to_value(rating),
+        "outlook": outlook,
+        "promptVersion": prompt_version,
+        "model": model,
+        "analyzedAt": date.today().isoformat(),
+    }
+    ratings = company["ratings"]
+    index = next((i for i, r in enumerate(ratings) if r["period"] == period), None)
+
+    if index is not None:
+        ratings[index] = entry
+    else:
+        ratings.append(entry)
+        ratings.sort(key=lambda r: period_key(r["period"]))
 
     companies_path.write_text(
         json.dumps(companies, ensure_ascii=False, indent=2) + "\n"
