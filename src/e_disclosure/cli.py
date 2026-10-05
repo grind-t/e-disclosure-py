@@ -41,6 +41,9 @@ RATING_SCALE = [
     "AAA",
 ]
 OUTLOOKS = ["STA", "POS", "NEG", "DEV"]
+AGENCY_RATINGS_URL = (
+    "https://raw.githubusercontent.com/grind-t/cbr-ratings/main/exports/issuers.json.br"
+)
 
 
 def main() -> None:
@@ -68,6 +71,13 @@ def main() -> None:
     set_rating_parser.add_argument("--prompt-version", type=int, required=True)
     set_rating_parser.add_argument("--model", required=True)
 
+    agency_ratings_parser = subparsers.add_parser(
+        "agency-ratings", help="показать рейтинги агентств из реестра ЦБ"
+    )
+    agency_ratings_parser.add_argument(
+        "queries", nargs="+", help="ИНН или часть названия эмитента"
+    )
+
     args = parser.parse_args()
 
     match args.command:
@@ -85,6 +95,8 @@ def main() -> None:
                 args.model,
                 args.exports_dir,
             )
+        case "agency-ratings":
+            print_agency_ratings(args.queries)
 
 
 async def pull_msfo_report(inn: str, exports_dir: Path, session_dir: Path) -> None:
@@ -211,3 +223,36 @@ def export_ratings(exports_dir: Path) -> None:
 
     data = json.dumps(ratings, ensure_ascii=False, separators=(",", ":"))
     (exports_dir / "ratings.json.br").write_bytes(brotli.compress(data.encode()))
+
+
+def print_agency_ratings(queries: list[str]) -> None:
+    # urllib зависает на IPv6, поэтому качаем через curl
+    data = subprocess.run(
+        ["curl", "-fsSL", AGENCY_RATINGS_URL], capture_output=True, check=True
+    ).stdout
+    issuers = json.loads(brotli.decompress(data))
+
+    for query in queries:
+        if query in issuers:
+            matches = {query: issuers[query]}
+        else:
+            needle = query.casefold()
+            matches = {
+                inn: agencies
+                for inn, agencies in issuers.items()
+                if any(needle in r["objectName"].casefold() for r in agencies.values())
+            }
+
+        if not matches:
+            print(f"{query}: рейтингов агентств нет\n")
+            continue
+
+        for inn, agencies in matches.items():
+            name = next(iter(agencies.values()))["objectName"]
+            print(f"{inn} {name}")
+            for agency, r in agencies.items():
+                print(
+                    f"  {agency}: {r['ratingValue']}, {r['prediction']}, "
+                    f"{r['releaseDate']}, {r['ratingAction']}, {r['releaseUrl']}"
+                )
+            print()
