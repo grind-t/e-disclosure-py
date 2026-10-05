@@ -11,3 +11,6 @@ wheels/
 
 # Browser profile
 .session
+
+# Environment variables
+.env
