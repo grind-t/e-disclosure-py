@@ -122,11 +122,11 @@
       },
       {
         "period": "2026, 6 месяцев",
-        "value": 20,
+        "value": 18,
         "outlook": "STA",
-        "promptVersion": 2,
+        "promptVersion": 9,
         "model": "claude-opus-5-5",
-        "analyzedAt": "2026-10-05"
+        "analyzedAt": "2026-10-27"
       }
     ],
     "reportType": 4
@@ -140,11 +140,11 @@
       },
       {
         "period": "2026, 6 месяцев",
-        "value": 21,
+        "value": 19,
         "outlook": "STA",
-        "promptVersion": 2,
+        "promptVersion": 9,
         "model": "claude-opus-5-5",
-        "analyzedAt": "2026-10-05"
+        "analyzedAt": "2026-10-27"
       }
     ],
     "reportType": 4
@@ -154,11 +154,11 @@
     "ratings": [
       {
         "period": "2025",
-        "value": 19,
+        "value": 12,
         "outlook": "NEG",
-        "promptVersion": 2,
+        "promptVersion": 9,
         "model": "claude-opus-5-5",
-        "analyzedAt": "2026-10-05"
+        "analyzedAt": "2026-10-27"
       }
     ],
     "reportType": 3
@@ -256,9 +256,9 @@
         "period": "2026, 6 месяцев",
         "value": 23,
         "outlook": "STA",
-        "promptVersion": 2,
+        "promptVersion": 9,
         "model": "claude-opus-5-5",
-        "analyzedAt": "2026-10-05"
+        "analyzedAt": "2026-10-27"
       }
     ],
     "reportType": 4
