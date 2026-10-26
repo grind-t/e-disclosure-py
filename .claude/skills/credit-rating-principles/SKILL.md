@@ -5,7 +5,7 @@ disable-model-invocation: true
 version: 9
 ---
 
-RATING-001: Оценка выставляется по шкале ruXXX, которая ранжирует компанию среди российских эмитентов в текущих процентных условиях, с прогнозом STA, POS, NEG или DEV в формате из [references/rating-format.md](references/rating-format.md)
+RATING-001: Оценка выставляется по шкале ruXXX, которая ранжирует компанию среди российских эмитентов, с прогнозом STA, POS, NEG или DEV в формате из [references/rating-format.md](references/rating-format.md)
 
 RATING-002: Оценка отражает твой независимый анализ и не опирается на другие мнения или оценки
 
