@@ -1,11 +1,13 @@
 import argparse
 import asyncio
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import date
 from pathlib import Path
 
@@ -44,6 +46,8 @@ OUTLOOKS = ["STA", "POS", "NEG", "DEV"]
 AGENCY_RATINGS_URL = (
     "https://raw.githubusercontent.com/grind-t/cbr-ratings/main/exports/issuers.json.br"
 )
+DATALAB_CONVERT_URL = "https://www.datalab.to/api/v1/convert"
+DATALAB_POLL_INTERVAL = 2
 
 
 def main() -> None:
@@ -82,6 +86,14 @@ def main() -> None:
         "queries", nargs="+", help="ИНН или часть названия эмитента"
     )
 
+    pdf_to_html_parser = subparsers.add_parser(
+        "pdf-to-html", help="конвертировать PDF в HTML через datalab.to"
+    )
+    pdf_to_html_parser.add_argument("pdfs", nargs="+", type=Path)
+    pdf_to_html_parser.add_argument(
+        "--mode", choices=["lite", "fast", "balanced", "accurate"], default="balanced"
+    )
+
     args = parser.parse_args()
 
     match args.command:
@@ -105,6 +117,9 @@ def main() -> None:
             )
         case "agency-ratings":
             print_agency_ratings(args.queries)
+        case "pdf-to-html":
+            for pdf in args.pdfs:
+                pdf_to_html(pdf, args.mode)
 
 
 async def pull_msfo_report(
@@ -268,3 +283,59 @@ def print_agency_ratings(queries: list[str]) -> None:
                     f"{r['releaseDate']}, {r['ratingAction']}, {r['releaseUrl']}"
                 )
             print()
+
+
+def pdf_to_html(pdf: Path, mode: str) -> None:
+    api_key = os.environ.get("DATALAB_API_KEY")
+    if not api_key:
+        sys.exit("Не задан DATALAB_API_KEY")
+    # Заголовок с ключом передаём через stdin, чтобы ключ не попал в argv и трейсбеки
+    auth = f"X-API-Key: {api_key}".encode()
+
+    # Как и в print_agency_ratings, ходим через curl из-за зависаний urllib на IPv6
+    submitted = json.loads(
+        subprocess.run(
+            [
+                "curl",
+                "-fsSL",
+                "-H",
+                "@-",
+                "-F",
+                f"file=@{pdf};type=application/pdf",
+                "-F",
+                "output_format=html",
+                "-F",
+                f"mode={mode}",
+                "-F",
+                "disable_image_extraction=true",
+                "-F",
+                "disable_image_captions=true",
+                DATALAB_CONVERT_URL,
+            ],
+            input=auth,
+            capture_output=True,
+            check=True,
+        ).stdout
+    )
+    if not submitted.get("success"):
+        sys.exit(f"{pdf}: {submitted.get('error')}")
+
+    while True:
+        time.sleep(DATALAB_POLL_INTERVAL)
+        result = json.loads(
+            subprocess.run(
+                ["curl", "-fsSL", "-H", "@-", submitted["request_check_url"]],
+                input=auth,
+                capture_output=True,
+                check=True,
+            ).stdout
+        )
+        if result["status"] != "processing":
+            break
+
+    if result["status"] != "complete" or not result.get("success"):
+        sys.exit(f"{pdf}: {result.get('error')}")
+
+    html_path = pdf.with_suffix(".html")
+    html_path.write_text(result["html"])
+    print(f"{html_path} ({result.get('page_count')} стр.)")
