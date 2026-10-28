@@ -12,7 +12,7 @@ from pathlib import Path
 import brotli
 from patchright.async_api import async_playwright
 
-from e_disclosure.get_latest_msfo_report import MsfoReport, get_latest_msfo_report
+from e_disclosure.get_msfo_report import MsfoReport, get_msfo_report
 
 RATING_SCALE = [
     "D",
@@ -55,6 +55,10 @@ def main() -> None:
         "pull-report", help="скачать последний МСФО-отчёт по ИНН"
     )
     pull_report.add_argument("inn")
+    pull_report.add_argument(
+        "--period",
+        help="период отчёта, например 2025; такой отчёт только сохраняется в exports",
+    )
     pull_report.add_argument("--session-dir", type=Path, default=Path(".session"))
 
     subparsers.add_parser(
@@ -82,7 +86,11 @@ def main() -> None:
 
     match args.command:
         case "pull-report":
-            asyncio.run(pull_msfo_report(args.inn, args.exports_dir, args.session_dir))
+            asyncio.run(
+                pull_msfo_report(
+                    args.inn, args.period, args.exports_dir, args.session_dir
+                )
+            )
         case "export-ratings":
             export_ratings(args.exports_dir)
         case "set-rating":
@@ -99,13 +107,15 @@ def main() -> None:
             print_agency_ratings(args.queries)
 
 
-async def pull_msfo_report(inn: str, exports_dir: Path, session_dir: Path) -> None:
+async def pull_msfo_report(
+    inn: str, period: str | None, exports_dir: Path, session_dir: Path
+) -> None:
     async with async_playwright() as p:
         browser = await p.chromium.launch_persistent_context(
             session_dir, channel="chrome", headless=False, no_viewport=True
         )
         page = browser.pages[0] if browser.pages else await browser.new_page()
-        report = await get_latest_msfo_report(page, inn)
+        report = await get_msfo_report(page, inn, period)
         await browser.close()
 
     if not report:
@@ -113,7 +123,9 @@ async def pull_msfo_report(inn: str, exports_dir: Path, session_dir: Path) -> No
         return
 
     export_report(inn, report, exports_dir)
-    update_company(inn, report, exports_dir)
+    # Отчёт за прошлый период дополняет анализ и не заводит новый рейтинг
+    if period is None:
+        update_company(inn, report, exports_dir)
 
 
 def export_report(inn: str, report: MsfoReport, exports_dir: Path) -> None:
