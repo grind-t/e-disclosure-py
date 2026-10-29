@@ -1,5 +1,6 @@
 # Техдолг проекта e-disclosure-py на 2026-10-30.
-# Поля — по навыку code-quality:defects; порядок — от самых серьёзных рисков.
+# Поля — по навыку code-quality:defects; порядок — по важности: максимум «вероятность × тяжесть» по рискам
+# (High 3, Medium 2, Low 1; Blocking 5 … Inconsequential 1), при равенстве — по тяжести.
 
 - defect_description: >-
     Рейтинги до v22 переведены на национальную шкалу по таблице S&P, с v22 —
@@ -81,6 +82,24 @@
       severity: Major
 
 - defect_description: >-
+    Методика перевода на национальную шкалу (acra-mapping.pdf) исключена из
+    репозитория, а навык ссылается на неё как на обязательный источник
+  defect_location: >-
+    .claude/skills/credit-rating-principles/SKILL.md:10, .gitignore:18
+  defect_type: Reproducible Builds (reproducible-builds.org definition)
+  defect_characteristic: Maintainability
+  defect_subcharacteristic: Reusability
+  defect_risks:
+    most_likely:
+      event: >-
+        Навык запускают в свежем клоне или облачной сессии без локального PDF
+      consequence: >-
+        Модель не находит таблицу и переводит уровень по памяти, так что
+        оценки за одну версию навыка несопоставимы между машинами
+      likelihood: Medium
+      severity: Major
+
+- defect_description: >-
     unzip и 7z пишут прогресс распаковки в тот же stdout, где pull_report
     отдаёт машиночитаемый JSON
   defect_location: >-
@@ -99,6 +118,46 @@
         и пайплайн рейтингов приходится допиливать на каждом архиве
       likelihood: High
       severity: Minor
+
+- defect_description: >-
+    Скачанные отчёты (~98 МБ бинарных .dclx/.html) хранятся в git вместе с
+    кодом библиотеки
+  defect_location: exports/
+  defect_type: Large binary files in Git (Chacon & Straub, Pro Git, 2nd ed., 10.7 Maintenance and Data Recovery)
+  defect_characteristic: Performance Efficiency
+  defect_subcharacteristic: Capacity
+  defect_risks:
+    most_likely:
+      event: >-
+        Каждый новый период добавляет и переизвлекает десятки отчётов
+      consequence: >-
+        Репозиторий растёт на десятки мегабайт за квартал, клоны и CI
+        замедляются, а история кода тонет в коммитах данных
+      likelihood: High
+      severity: Minor
+
+- defect_description: >-
+    Имя файла из Content-Disposition используется как путь без очистки
+  defect_location: src/e_disclosure/_stateless_effects/unpack_files.py:11-13
+  defect_type: CWE-22 Path Traversal (MITRE CWE 4.x)
+  defect_characteristic: Security
+  defect_subcharacteristic: Integrity
+  defect_risks:
+    most_likely:
+      event: >-
+        Сервер отдаёт обычное имя файла
+      consequence: >-
+        Файл пишется во временную папку, ущерба нет
+      likelihood: High
+      severity: Inconsequential
+    worst_credible:
+      event: >-
+        Скомпрометированный или подменённый ответ приходит с именем вида
+        ../../.bashrc
+      consequence: >-
+        Тело ответа перезаписывает файл пользователя вне временной папки
+      likelihood: Low
+      severity: Critical
 
 - defect_description: >-
     Распаковка по суффиксу чувствительна к регистру и знает только .zip и
@@ -183,81 +242,6 @@
       severity: Minor
 
 - defect_description: >-
-    Имя файла из Content-Disposition используется как путь без очистки
-  defect_location: src/e_disclosure/_stateless_effects/unpack_files.py:11-13
-  defect_type: CWE-22 Path Traversal (MITRE CWE 4.x)
-  defect_characteristic: Security
-  defect_subcharacteristic: Integrity
-  defect_risks:
-    most_likely:
-      event: >-
-        Сервер отдаёт обычное имя файла
-      consequence: >-
-        Файл пишется во временную папку, ущерба нет
-      likelihood: High
-      severity: Inconsequential
-    worst_credible:
-      event: >-
-        Скомпрометированный или подменённый ответ приходит с именем вида
-        ../../.bashrc
-      consequence: >-
-        Тело ответа перезаписывает файл пользователя вне временной папки
-      likelihood: Low
-      severity: Critical
-
-- defect_description: >-
-    pdf_to_html пишет пустой HTML и печатает успех, если конвертация
-    не удалась (result.html пуст)
-  defect_location: scripts/pdf_to_html.py:26-31
-  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
-  defect_characteristic: Reliability
-  defect_subcharacteristic: Faultlessness
-  defect_risks:
-    most_likely:
-      event: >-
-        datalab возвращает ошибку конвертации для скана или битого PDF
-      consequence: >-
-        Рядом с PDF лежит пустой HTML, и анализ отчёта начинается с
-        непригодного файла, пока кто-то не заметит пустоту
-      likelihood: Low
-      severity: Minor
-
-- defect_description: >-
-    Методика перевода на национальную шкалу (acra-mapping.pdf) исключена из
-    репозитория, а навык ссылается на неё как на обязательный источник
-  defect_location: >-
-    .claude/skills/credit-rating-principles/SKILL.md:10, .gitignore:18
-  defect_type: Reproducible Builds (reproducible-builds.org definition)
-  defect_characteristic: Maintainability
-  defect_subcharacteristic: Reusability
-  defect_risks:
-    most_likely:
-      event: >-
-        Навык запускают в свежем клоне или облачной сессии без локального PDF
-      consequence: >-
-        Модель не находит таблицу и переводит уровень по памяти, так что
-        оценки за одну версию навыка несопоставимы между машинами
-      likelihood: Medium
-      severity: Major
-
-- defect_description: >-
-    Пример в формате оценки показывает promptVersion 8 при текущей версии
-    навыка 22
-  defect_location: .claude/skills/credit-rating-principles/references/rating-format.md:10
-  defect_type: Few-shot prompting (Brown et al., «Language Models are Few-Shot Learners», 2020)
-  defect_characteristic: Functional Suitability
-  defect_subcharacteristic: Functional Correctness
-  defect_risks:
-    most_likely:
-      event: >-
-        Модель копирует значение из примера вместо чтения frontmatter
-      consequence: >-
-        Оценка записывается с неверной версией, и её нельзя отличить от
-        оценок по старой методике
-      likelihood: Low
-      severity: Minor
-
-- defect_description: >-
     Раскладка таблицы отчётов (6 колонок, ссылка в колонке 5) размазана
     между эффектом и вычислением
   defect_location: >-
@@ -315,20 +299,37 @@
       severity: Major
 
 - defect_description: >-
-    Скачанные отчёты (~98 МБ бинарных .dclx/.html) хранятся в git вместе с
-    кодом библиотеки
-  defect_location: exports/
-  defect_type: Large binary files in Git (Chacon & Straub, Pro Git, 2nd ed., 10.7 Maintenance and Data Recovery)
-  defect_characteristic: Performance Efficiency
-  defect_subcharacteristic: Capacity
+    pdf_to_html пишет пустой HTML и печатает успех, если конвертация
+    не удалась (result.html пуст)
+  defect_location: scripts/pdf_to_html.py:26-31
+  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
+  defect_characteristic: Reliability
+  defect_subcharacteristic: Faultlessness
   defect_risks:
     most_likely:
       event: >-
-        Каждый новый период добавляет и переизвлекает десятки отчётов
+        datalab возвращает ошибку конвертации для скана или битого PDF
       consequence: >-
-        Репозиторий растёт на десятки мегабайт за квартал, клоны и CI
-        замедляются, а история кода тонет в коммитах данных
-      likelihood: High
+        Рядом с PDF лежит пустой HTML, и анализ отчёта начинается с
+        непригодного файла, пока кто-то не заметит пустоту
+      likelihood: Low
+      severity: Minor
+
+- defect_description: >-
+    Пример в формате оценки показывает promptVersion 8 при текущей версии
+    навыка 22
+  defect_location: .claude/skills/credit-rating-principles/references/rating-format.md:10
+  defect_type: Few-shot prompting (Brown et al., «Language Models are Few-Shot Learners», 2020)
+  defect_characteristic: Functional Suitability
+  defect_subcharacteristic: Functional Correctness
+  defect_risks:
+    most_likely:
+      event: >-
+        Модель копирует значение из примера вместо чтения frontmatter
+      consequence: >-
+        Оценка записывается с неверной версией, и её нельзя отличить от
+        оценок по старой методике
+      likelihood: Low
       severity: Minor
 
 - defect_description: >-
