@@ -342,12 +342,12 @@ name = "grind-t-e-disclosure"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "brotli" },
     { name = "patchright" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "brotli" },
     { name = "datalab-python-sdk" },
     { name = "grind-t-lint-rules" },
     { name = "import-linter" },
@@ -360,13 +360,11 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "brotli", specifier = ">=1.2.0" },
-    { name = "patchright", specifier = ">=1.63.0" },
-]
+requires-dist = [{ name = "patchright", specifier = ">=1.63.0" }]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "brotli", specifier = ">=1.2.0" },
     { name = "datalab-python-sdk", specifier = ">=0.7.1" },
     { name = "grind-t-lint-rules", specifier = ">=0.4.0" },
     { name = "import-linter" },

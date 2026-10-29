@@ -9,4 +9,4 @@ class MsfoReport:
     company_id: str
     type: ReportType
     period: str
-    file: DownloadedFile
+    files: list[DownloadedFile]

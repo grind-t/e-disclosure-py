@@ -45,6 +45,7 @@ async def _get(inn: str, period: str | None) -> MsfoReport | None:
         find_company_by_inn=find_company_by_inn,
         list_reports=list_reports,
         download_file=download_file,
+        unpack_files=lambda file: [file],
     )
 
 
@@ -55,7 +56,7 @@ async def test_latest_skips_non_msfo_accounting_reports() -> None:
         company_id="42",
         type=ReportType.CONSOLIDATED,
         period="2026, 6 месяцев",
-        file=DownloadedFile(name="2026, 6 месяцев.zip", body=b""),
+        files=[DownloadedFile(name="2026, 6 месяцев.zip", body=b"")],
     )
 
 
