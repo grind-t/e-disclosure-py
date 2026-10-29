@@ -2,34 +2,6 @@
 # Поля — по навыку code-quality:defects; порядок — от самых серьёзных рисков.
 
 - defect_description: >-
-    Компания берётся по первой ссылке company.aspx в выдаче поиска, и ИНН
-    найденной компании не сверяется с запрошенным
-  defect_location: src/e_disclosure/_stateless_effects/find_company_by_inn.py:12-19
-  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
-  defect_characteristic: Functional Suitability
-  defect_subcharacteristic: Functional Correctness
-  defect_risks:
-    most_likely:
-      event: >-
-        Поиск по ИНН находит единственную нужную компанию
-      consequence: >-
-        Отчёт скачивается верно, а риск остаётся скрытым и проявится только
-        на неоднозначной выдаче
-      likelihood: High
-      severity: Inconsequential
-    worst_credible:
-      event: >-
-        Поиск полнотекстовый, и по ИНН первой выходит другая компания
-        (дочерняя, с этим ИНН в тексте карточки или в названии); код берёт её
-        без проверки
-      consequence: >-
-        В exports под ИНН компании ложится отчёт другой компании, по нему
-        выставляется рейтинг, и он публикуется в ratings.json.br как рейтинг
-        запрошенной компании
-      likelihood: Low
-      severity: Critical
-
-- defect_description: >-
     Рейтинги до v22 переведены на национальную шкалу по таблице S&P, с v22 —
     по таблице АКРА, а экспорт смешивает их без учёта promptVersion; в части
     записей promptVersion нет совсем
