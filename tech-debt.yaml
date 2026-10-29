@@ -1,0 +1,395 @@
+# Техдолг проекта e-disclosure-py на 2026-10-30.
+# Поля — по навыку code-quality:defects; порядок — от самых серьёзных рисков.
+
+- defect_description: >-
+    Компания берётся по первой ссылке company.aspx в выдаче поиска, и ИНН
+    найденной компании не сверяется с запрошенным
+  defect_location: src/e_disclosure/_stateless_effects/find_company_by_inn.py:12-19
+  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
+  defect_characteristic: Functional Suitability
+  defect_subcharacteristic: Functional Correctness
+  defect_risks:
+    most_likely:
+      event: >-
+        Поиск по ИНН находит единственную нужную компанию
+      consequence: >-
+        Отчёт скачивается верно, а риск остаётся скрытым и проявится только
+        на неоднозначной выдаче
+      likelihood: High
+      severity: Inconsequential
+    worst_credible:
+      event: >-
+        Поиск полнотекстовый, и по ИНН первой выходит другая компания
+        (дочерняя, с этим ИНН в тексте карточки или в названии); код берёт её
+        без проверки
+      consequence: >-
+        В exports под ИНН компании ложится отчёт другой компании, по нему
+        выставляется рейтинг, и он публикуется в ratings.json.br как рейтинг
+        запрошенной компании
+      likelihood: Low
+      severity: Critical
+
+- defect_description: >-
+    Рейтинги до v22 переведены на национальную шкалу по таблице S&P, с v22 —
+    по таблице АКРА, а экспорт смешивает их без учёта promptVersion; в части
+    записей promptVersion нет совсем
+  defect_location: scripts/export_ratings.py:13-20, exports/companies.json
+  defect_type: Data Versioning / Schema Evolution (Kleppmann, Designing Data-Intensive Applications, 2017, ch. 4)
+  defect_characteristic: Functional Suitability
+  defect_subcharacteristic: Functional Correctness
+  defect_risks:
+    most_likely:
+      event: >-
+        Часть компаний переоценена по v22, остальные остаются на оценках v2–v21,
+        и экспорт отдаёт все value как значения одной шкалы
+      consequence: >-
+        Пользователи ratings.json.br сравнивают компании, у которых одно и то
+        же value означает разные глобальные уровни, и делают неверные выводы
+        об относительном кредитном риске
+      likelihood: High
+      severity: Major
+
+- defect_description: >-
+    Последним рейтингом считается последний элемент массива ratings, а не
+    оценка за самый свежий период
+  defect_location: scripts/export_ratings.py:15-17
+  defect_type: Implicit Coupling via Ordering (Temporal Coupling, Hunt & Thomas, The Pragmatic Programmer, 20th ann. ed., topic 28)
+  defect_characteristic: Functional Suitability
+  defect_subcharacteristic: Functional Correctness
+  defect_risks:
+    most_likely:
+      event: >-
+        Агент или maintainer дописывает оценку за более старый период (например,
+        годовую 2025 после «2026, 6 месяцев») в конец массива
+      consequence: >-
+        В ratings.json.br уходит рейтинг по устаревшей отчётности вместо
+        актуального
+      likelihood: Medium
+      severity: Major
+
+- defect_description: >-
+    Формат companies.json задан только прозой в навыке; ни запись агентом,
+    ни export_ratings схему не проверяют, а отсутствующие value/outlook
+    молча выпадают из экспорта
+  defect_location: >-
+    .claude/skills/credit-rating-principles/references/rating-format.md,
+    scripts/export_ratings.py:14-18
+  defect_type: Design by Contract (Meyer, Object-Oriented Software Construction, 2nd ed., ch. 11)
+  defect_characteristic: Reliability
+  defect_subcharacteristic: Faultlessness
+  defect_risks:
+    most_likely:
+      event: >-
+        LLM записывает оценку с опечаткой в ключе, строкой вместо числа
+        («ruBBB») или без value
+      consequence: >-
+        В ratings.json.br попадает компания без рейтинга или с нечисловым
+        рейтингом, и потребитель файла показывает или считает его неверно
+      likelihood: Medium
+      severity: Major
+
+- defect_description: >-
+    Из архива берутся только файлы верхнего уровня; если отчёт лежит в
+    папке внутри архива, список файлов пуст, а pull_report сообщает об успехе
+  defect_location: >-
+    src/e_disclosure/_stateless_effects/unpack_files.py:25-29,
+    scripts/pull_report.py:59-72
+  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
+  defect_characteristic: Functional Suitability
+  defect_subcharacteristic: Functional Completeness
+  defect_risks:
+    most_likely:
+      event: >-
+        Компания выкладывает архив с отчётом во вложенной папке
+      consequence: >-
+        Скрипт печатает JSON об успешной загрузке, но в exports ничего не
+        появляется; maintainer тратит время на поиск причины или считает
+        отчёт скачанным
+      likelihood: Medium
+      severity: Major
+
+- defect_description: >-
+    unzip и 7z пишут прогресс распаковки в тот же stdout, где pull_report
+    отдаёт машиночитаемый JSON
+  defect_location: >-
+    src/e_disclosure/_stateless_effects/unpack_files.py:17-21,
+    scripts/pull_report.py:63-72
+  defect_type: Rule of Silence (Raymond, The Art of Unix Programming, 2003, ch. 1)
+  defect_characteristic: Compatibility
+  defect_subcharacteristic: Interoperability
+  defect_risks:
+    most_likely:
+      event: >-
+        Отчёт приходит архивом, и агент или скрипт разбирает stdout
+        pull_report как JSON
+      consequence: >-
+        Разбор JSON падает или требует ручного выковыривания последней строки,
+        и пайплайн рейтингов приходится допиливать на каждом архиве
+      likelihood: High
+      severity: Minor
+
+- defect_description: >-
+    Распаковка по суффиксу чувствительна к регистру и знает только .zip и
+    .rar; .ZIP, .RAR, .7z сохраняются как есть
+  defect_location: src/e_disclosure/_stateless_effects/unpack_files.py:15-23
+  defect_type: Robustness Principle (Postel, RFC 1122, 1.2.2)
+  defect_characteristic: Functional Suitability
+  defect_subcharacteristic: Functional Completeness
+  defect_risks:
+    most_likely:
+      event: >-
+        Компания выкладывает архив с расширением в верхнем регистре или в 7z
+      consequence: >-
+        В exports ложится нераспакованный архив, и maintainer распаковывает
+        и переименовывает файлы вручную
+      likelihood: Medium
+      severity: Minor
+
+- defect_description: >-
+    Внешние зависимости (Chrome, unzip, 7z, ключ datalab) нигде не объявлены,
+    в проекте нет README с установкой и запуском
+  defect_location: >-
+    src/e_disclosure/_stateless_effects/unpack_files.py,
+    scripts/pull_report.py:34-36, scripts/pdf_to_html.py, корень проекта
+  defect_type: Twelve-Factor App, II. Dependencies (Wiggins, 12factor.net, 2011)
+  defect_characteristic: Flexibility
+  defect_subcharacteristic: Installability
+  defect_risks:
+    most_likely:
+      event: >-
+        Проект запускают на новой машине или в новом окружении агента
+      consequence: >-
+        Первый pull_report падает с FileNotFoundError или ошибкой запуска
+        Chrome посреди работы, и зависимости восстанавливают по трейсбекам
+      likelihood: Medium
+      severity: Minor
+
+- defect_description: >-
+    Отсутствие элемента обрабатывается ожиданием локатора: при пустой выдаче
+    поиска или строке без ссылки get_attribute ждёт 30 с и бросает
+    TimeoutError, поэтому ветки «не найдено» почти недостижимы
+  defect_location: >-
+    src/e_disclosure/_stateless_effects/find_company_by_inn.py:12-16,
+    src/e_disclosure/_stateless_effects/list_reports.py:23-27
+  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
+  defect_characteristic: Reliability
+  defect_subcharacteristic: Fault Tolerance
+  defect_risks:
+    most_likely:
+      event: >-
+        Запрашивают ИНН, которого нет на e-disclosure.ru
+      consequence: >-
+        Вместо «Отчет не найден» через 30 с выводится трейсбек TimeoutError,
+        и maintainer разбирается, сбой это сайта или отсутствие компании
+      likelihood: Medium
+      severity: Minor
+    worst_credible:
+      event: >-
+        На вкладке отчётов появляется строка из 6+ ячеек без ссылки (например,
+        отчёт снят с публикации)
+      consequence: >-
+        list_reports падает по таймауту на всей вкладке, и отчёты компании
+        перестают скачиваться, пока код не исправят
+      likelihood: Low
+      severity: Major
+
+- defect_description: >-
+    Ответ сервера не проверяется на статус, а отсутствие Content-Disposition
+    даёт KeyError вместо задуманного ValueError
+  defect_location: src/e_disclosure/_stateless_effects/download_file.py:11-16
+  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
+  defect_characteristic: Reliability
+  defect_subcharacteristic: Fault Tolerance
+  defect_risks:
+    most_likely:
+      event: >-
+        Защита от ботов или ошибка сервера отдаёт HTML-страницу вместо файла
+      consequence: >-
+        pull_report падает с трейсбеком KeyError без понятной причины, и
+        maintainer тратит время на диагностику
+      likelihood: Medium
+      severity: Minor
+
+- defect_description: >-
+    Имя файла из Content-Disposition используется как путь без очистки
+  defect_location: src/e_disclosure/_stateless_effects/unpack_files.py:11-13
+  defect_type: CWE-22 Path Traversal (MITRE CWE 4.x)
+  defect_characteristic: Security
+  defect_subcharacteristic: Integrity
+  defect_risks:
+    most_likely:
+      event: >-
+        Сервер отдаёт обычное имя файла
+      consequence: >-
+        Файл пишется во временную папку, ущерба нет
+      likelihood: High
+      severity: Inconsequential
+    worst_credible:
+      event: >-
+        Скомпрометированный или подменённый ответ приходит с именем вида
+        ../../.bashrc
+      consequence: >-
+        Тело ответа перезаписывает файл пользователя вне временной папки
+      likelihood: Low
+      severity: Critical
+
+- defect_description: >-
+    pdf_to_html пишет пустой HTML и печатает успех, если конвертация
+    не удалась (result.html пуст)
+  defect_location: scripts/pdf_to_html.py:26-31
+  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
+  defect_characteristic: Reliability
+  defect_subcharacteristic: Faultlessness
+  defect_risks:
+    most_likely:
+      event: >-
+        datalab возвращает ошибку конвертации для скана или битого PDF
+      consequence: >-
+        Рядом с PDF лежит пустой HTML, и анализ отчёта начинается с
+        непригодного файла, пока кто-то не заметит пустоту
+      likelihood: Low
+      severity: Minor
+
+- defect_description: >-
+    Методика перевода на национальную шкалу (acra-mapping.pdf) исключена из
+    репозитория, а навык ссылается на неё как на обязательный источник
+  defect_location: >-
+    .claude/skills/credit-rating-principles/SKILL.md:10, .gitignore:18
+  defect_type: Reproducible Builds (reproducible-builds.org definition)
+  defect_characteristic: Maintainability
+  defect_subcharacteristic: Reusability
+  defect_risks:
+    most_likely:
+      event: >-
+        Навык запускают в свежем клоне или облачной сессии без локального PDF
+      consequence: >-
+        Модель не находит таблицу и переводит уровень по памяти, так что
+        оценки за одну версию навыка несопоставимы между машинами
+      likelihood: Medium
+      severity: Major
+
+- defect_description: >-
+    Пример в формате оценки показывает promptVersion 8 при текущей версии
+    навыка 22
+  defect_location: .claude/skills/credit-rating-principles/references/rating-format.md:10
+  defect_type: Few-shot prompting (Brown et al., «Language Models are Few-Shot Learners», 2020)
+  defect_characteristic: Functional Suitability
+  defect_subcharacteristic: Functional Correctness
+  defect_risks:
+    most_likely:
+      event: >-
+        Модель копирует значение из примера вместо чтения frontmatter
+      consequence: >-
+        Оценка записывается с неверной версией, и её нельзя отличить от
+        оценок по старой методике
+      likelihood: Low
+      severity: Minor
+
+- defect_description: >-
+    Раскладка таблицы отчётов (6 колонок, ссылка в колонке 5) размазана
+    между эффектом и вычислением
+  defect_location: >-
+    src/e_disclosure/_stateless_effects/list_reports.py:23-27,
+    src/e_disclosure/_stateless_computations/parse_report_row.py:9-18
+  defect_type: Shotgun Surgery (Fowler, Refactoring, 2nd ed.)
+  defect_characteristic: Maintainability
+  defect_subcharacteristic: Modifiability
+  defect_risks:
+    most_likely:
+      event: >-
+        e-disclosure.ru меняет колонки таблицы отчётов
+      consequence: >-
+        Правка требует согласованных изменений в двух модулях, и починка
+        загрузки отчётов идёт дольше
+      likelihood: Medium
+      severity: Minor
+
+- defect_description: >-
+    Тестами покрыт только workflow; unpack_files, parse_report_row,
+    parse_company_id, export_file_names и export_ratings не тестируются
+  defect_location: >-
+    tests/, src/e_disclosure/_stateless_effects/unpack_files.py,
+    src/e_disclosure/_stateless_computations/, scripts/
+  defect_type: Test Pyramid (Cohn, Succeeding with Agile, 2009)
+  defect_characteristic: Maintainability
+  defect_subcharacteristic: Testability
+  defect_risks:
+    most_likely:
+      event: >-
+        Maintainer меняет разбор строк, именование экспортов или распаковку
+      consequence: >-
+        Регрессия обнаруживается только на реальной загрузке или в
+        опубликованных рейтингах, и цикл правки удлиняется
+      likelihood: Medium
+      severity: Minor
+
+- defect_description: >-
+    Тай-брейк между вкладками держится на неявной паре — порядке ключей
+    dict в workflow и на том, что max возвращает первый максимум; не тестируется
+  defect_location: >-
+    src/e_disclosure/_stateless_workflows/get_msfo_report.py:27-31,
+    src/e_disclosure/_stateless_computations/select_msfo_report.py:21
+  defect_type: Temporal Coupling (Hunt & Thomas, The Pragmatic Programmer, 20th ann. ed., topic 28)
+  defect_characteristic: Maintainability
+  defect_subcharacteristic: Modifiability
+  defect_risks:
+    most_likely:
+      event: >-
+        Maintainer меняет порядок вкладок или способ выбора максимума
+      consequence: >-
+        При равной дате размещения начинает выбираться индивидуальная МСФО
+        вместо консолидированной, и рейтинг строится не по той отчётности
+      likelihood: Low
+      severity: Major
+
+- defect_description: >-
+    Скачанные отчёты (~98 МБ бинарных .dclx/.html) хранятся в git вместе с
+    кодом библиотеки
+  defect_location: exports/
+  defect_type: Large binary files in Git (Chacon & Straub, Pro Git, 2nd ed., 10.7 Maintenance and Data Recovery)
+  defect_characteristic: Performance Efficiency
+  defect_subcharacteristic: Capacity
+  defect_risks:
+    most_likely:
+      event: >-
+        Каждый новый период добавляет и переизвлекает десятки отчётов
+      consequence: >-
+        Репозиторий растёт на десятки мегабайт за квартал, клоны и CI
+        замедляются, а история кода тонет в коммитах данных
+      likelihood: High
+      severity: Minor
+
+- defect_description: >-
+    Company.name вычисляется (лишний запрос text_content), но нигде не читается;
+    vulture это не ловит, так как имя поля совпадает с DownloadedFile.name
+  defect_location: >-
+    src/e_disclosure/_entities/company.py:7,
+    src/e_disclosure/_stateless_effects/find_company_by_inn.py:18
+  defect_type: Dead Code (Fowler, Refactoring, 2nd ed.)
+  defect_characteristic: Maintainability
+  defect_subcharacteristic: Analysability
+  defect_risks:
+    most_likely:
+      event: >-
+        Maintainer читает или меняет поиск компании
+      consequence: >-
+        Тратит время на поддержку поля, которое никому не нужно
+      likelihood: Medium
+      severity: Inconsequential
+
+- defect_description: >-
+    Три пустых stateful-пакета из шаблона без кода
+  defect_location: >-
+    src/e_disclosure/_stateful_computations, _stateful_effects,
+    _stateful_workflows
+  defect_type: Speculative Generality (Fowler, Refactoring, 2nd ed.)
+  defect_characteristic: Maintainability
+  defect_subcharacteristic: Analysability
+  defect_risks:
+    most_likely:
+      event: >-
+        Новый участник изучает структуру проекта
+      consequence: >-
+        Ищет несуществующее состояние и тратит немного времени на ориентацию
+      likelihood: Low
+      severity: Inconsequential
