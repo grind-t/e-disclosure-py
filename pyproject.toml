@@ -2,6 +2,7 @@
 name = "grind-t-e-disclosure"
 version = "0.1.0"
 description = "Pull MSFO reports from e-disclosure.ru"
+license = "ISC"
 authors = [
     { name = "grind-t", email = "grindt.gd@gmail.com" }
 ]
@@ -11,8 +12,12 @@ dependencies = [
     "patchright>=1.63.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/grind-t/e-disclosure-py"
+Issues = "https://github.com/grind-t/e-disclosure-py/issues"
+
 [project.scripts]
-e-disclosure = "e_disclosure.cli:main"
+e-disclosure = "e_disclosure:main"
 
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
@@ -22,10 +27,75 @@ build-backend = "uv_build"
 module-name = "e_disclosure"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = [
+    "E", "F", "I", "UP", "B", "SIM", "RUF", "PT", "N",
+    "C4", "PIE", "PERF", "FURB", "PTH", "T20", "ANN", "ASYNC", "DTZ", "TID",
+]
+ignore = ["RUF001", "RUF002", "RUF003"]  # allow Cyrillic in strings, docstrings and comments
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"pytest.mark.parametrize".msg = "Use the `subtests` fixture with named cases instead."
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN"]
+"src/e_disclosure/__init__.py" = ["T20"]  # the CLI prints its results
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib", "--strict-markers", "--strict-config", "-ra", "-q"]
+xfail_strict = true
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["error"]
+
+[tool.poe.tasks]
+fmt = "ruff format"
+lint = [
+    { cmd = "ruff check" },
+    { cmd = "lint-imports --no-logo" },
+    { cmd = "lint-rules src" },
+    { cmd = "vulture src" },
+]
+typecheck = "ty check"
+test = "pytest"
+build = "uv build"
+check = ["lint", "typecheck", "test"]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.16.10",
-    "ty>=0.0.84",
+    "grind-t-lint-rules>=0.4.0",
+    "import-linter",
+    "poethepoet",
+    "pytest>=9",
+    "pytest-asyncio>=1.4.0",
+    "ruff",
+    "ty",
+    "vulture",
+]
+
+[tool.vulture]
+ignore_names = [
+    # TypedDict keys are read by subscript and from JSON files
+    "objectName", "ratingValue", "prediction", "releaseDate", "ratingAction",
+    "releaseUrl", "reportType", "promptVersion", "analyzedAt",
+    # enum members are offered as CLI choices by iterating the enum
+    "LITE", "FAST", "ACCURATE", "STABLE", "POSITIVE", "NEGATIVE", "DEVELOPING",
+]
+
+# ---------- Architecture rules enforced by lint-imports ----------
+[tool.importlinter]
+root_package = "e_disclosure"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Effects -> workflows -> computations -> entities"
+type = "layers"
+layers = [
+    "e_disclosure._stateless_effects : e_disclosure._stateful_effects",
+    "e_disclosure._stateless_workflows : e_disclosure._stateful_workflows",
+    "e_disclosure._stateless_computations : e_disclosure._stateful_computations",
+    "e_disclosure._entities",
 ]
