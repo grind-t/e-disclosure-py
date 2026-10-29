@@ -42,6 +42,7 @@ ban-relative-imports = "all"
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN"]
 "src/e_disclosure/__init__.py" = ["T20"]  # the CLI prints its results
+"scripts/**" = ["T20"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -63,9 +64,11 @@ typecheck = "ty check"
 test = "pytest"
 build = "uv build"
 check = ["lint", "typecheck", "test"]
+pdf-to-html = "python scripts/pdf_to_html.py"
 
 [dependency-groups]
 dev = [
+    "datalab-python-sdk>=0.7.1",
     "grind-t-lint-rules>=0.4.0",
     "import-linter",
     "poethepoet",
@@ -80,9 +83,9 @@ dev = [
 ignore_names = [
     # TypedDict keys are read by subscript and from JSON files
     "objectName", "ratingValue", "prediction", "releaseDate", "ratingAction",
-    "releaseUrl", "reportType", "promptVersion", "analyzedAt",
+    "releaseUrl", "reportType", "value", "promptVersion", "analyzedAt",
     # enum members are offered as CLI choices by iterating the enum
-    "LITE", "FAST", "ACCURATE", "STABLE", "POSITIVE", "NEGATIVE", "DEVELOPING",
+    "STABLE", "POSITIVE", "NEGATIVE", "DEVELOPING",
 ]
 
 # ---------- Architecture rules enforced by lint-imports ----------

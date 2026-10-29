@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import os
 import sys
 from datetime import datetime
 from functools import partial
@@ -8,13 +7,8 @@ from pathlib import Path
 
 from patchright.async_api import Page
 
-from e_disclosure._entities.conversion_mode import ConversionMode
 from e_disclosure._entities.msfo_report import MsfoReport
 from e_disclosure._entities.outlook import Outlook
-from e_disclosure._stateless_effects.convert_pdf_to_html import (
-    DatalabError,
-    convert_pdf_to_html,
-)
 from e_disclosure._stateless_effects.download_file import download_file
 from e_disclosure._stateless_effects.fetch_agency_ratings import fetch_agency_ratings
 from e_disclosure._stateless_effects.find_company_by_inn import find_company_by_inn
@@ -24,7 +18,6 @@ from e_disclosure._stateless_effects.read_companies import read_companies
 from e_disclosure._stateless_effects.unpack_files import unpack_files
 from e_disclosure._stateless_effects.write_companies import write_companies
 from e_disclosure._stateless_effects.write_export import write_export
-from e_disclosure._stateless_effects.write_text import write_text
 from e_disclosure._stateless_workflows.describe_agency_ratings import (
     describe_agency_ratings as _describe_agency_ratings,
 )
@@ -34,7 +27,6 @@ from e_disclosure._stateless_workflows.export_ratings import (
 from e_disclosure._stateless_workflows.get_msfo_report import (
     get_msfo_report as _get_msfo_report,
 )
-from e_disclosure._stateless_workflows.pdf_to_html import pdf_to_html as _pdf_to_html
 from e_disclosure._stateless_workflows.pull_msfo_report import (
     pull_msfo_report as _pull_msfo_report,
 )
@@ -113,19 +105,6 @@ def describe_agency_ratings(queries: list[str]) -> str:
     return _describe_agency_ratings(queries, fetch_agency_ratings=fetch_agency_ratings)
 
 
-def pdf_to_html(
-    pdf: Path, mode: ConversionMode, *, api_key: str
-) -> tuple[Path, int | None]:
-    """Конвертировать PDF в HTML рядом с ним через datalab.to."""
-    html_path, page_count = _pdf_to_html(
-        pdf,
-        mode,
-        convert_pdf_to_html=partial(convert_pdf_to_html, api_key),
-        write_text=write_text,
-    )
-    return Path(html_path), page_count
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(prog="e-disclosure")
     parser.add_argument("--exports-dir", type=Path, default=Path("exports"))
@@ -164,17 +143,6 @@ def main() -> None:
         "queries", nargs="+", help="ИНН или часть названия эмитента"
     )
 
-    pdf_to_html_parser = subparsers.add_parser(
-        "pdf-to-html", help="конвертировать PDF в HTML через datalab.to"
-    )
-    pdf_to_html_parser.add_argument("pdfs", nargs="+", type=Path)
-    pdf_to_html_parser.add_argument(
-        "--mode",
-        type=ConversionMode,
-        choices=list(ConversionMode),
-        default=ConversionMode.BALANCED,
-    )
-
     args = parser.parse_args()
 
     try:
@@ -204,27 +172,17 @@ def main() -> None:
                 )
             case "agency-ratings":
                 print(describe_agency_ratings(args.queries), end="")
-            case "pdf-to-html":
-                api_key = os.environ.get("DATALAB_API_KEY")
-                if not api_key:
-                    sys.exit("Не задан DATALAB_API_KEY")
-                for pdf in args.pdfs:
-                    html_path, page_count = pdf_to_html(pdf, args.mode, api_key=api_key)
-                    print(f"{html_path} ({page_count} стр.)")
-    except (ValueError, DatalabError) as error:
+    except ValueError as error:
         sys.exit(str(error))
 
 
 __all__ = [
-    "ConversionMode",
-    "DatalabError",
     "MsfoReport",
     "Outlook",
     "describe_agency_ratings",
     "export_ratings",
     "get_msfo_report",
     "main",
-    "pdf_to_html",
     "pull_msfo_report",
     "set_rating",
 ]
