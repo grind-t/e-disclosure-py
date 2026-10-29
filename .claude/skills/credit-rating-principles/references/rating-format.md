@@ -34,23 +34,3 @@
 | 5 | ruCCC- | 13 | ruBB+ | 21 | ruAA |
 | 6 | ruCCC | 14 | ruBBB- | 22 | ruAA+ |
 | 7 | ruCCC+ | 15 | ruBBB | 23 | ruAAA |
-
-## Соответствие глобальной шкале
-
-По S&P Global Ratings' National And Regional Scale Mapping Tables (14.08.2017), Russia Mapping Table — последняя таблица S&P для России. Если глобальному уровню соответствует несколько ступеней, выбери ступень по Methodology For National And Regional Scale Credit Ratings (2018).
-
-| Глобальная шкала | value | Рейтинг |
-|---|---|---|
-| bbb- и выше | 23 | ruAAA |
-| bb+ | 22 | ruAA+ |
-| bb | 21 | ruAA |
-| bb- | 20 | ruAA- |
-| b+ | 19, 18 | ruA+, ruA |
-| b | 18, 17, 16 | ruA, ruA-, ruBBB+ |
-| b- | 15, 14 | ruBBB, ruBBB- |
-| ccc+ | 13, 12, 11 | ruBB+, ruBB, ruBB- |
-| ccc | 10, 9, 8 | ruB+, ruB, ruB- |
-| ccc- | 7, 6, 5 | ruCCC+, ruCCC, ruCCC- |
-| cc | 3 | ruCC |
-| c | 1 | ruC |
-| sd, d | 0 | ruD |
