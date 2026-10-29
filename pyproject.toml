@@ -15,9 +15,6 @@ dependencies = [
 Homepage = "https://github.com/grind-t/e-disclosure-py"
 Issues = "https://github.com/grind-t/e-disclosure-py/issues"
 
-[project.scripts]
-e-disclosure = "e_disclosure:main"
-
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
 build-backend = "uv_build"
@@ -40,7 +37,6 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN"]
-"src/e_disclosure/__init__.py" = ["T20"]  # the CLI prints its results
 "scripts/**" = ["T20"]
 
 [tool.pytest.ini_options]
@@ -83,9 +79,6 @@ dev = [
 
 [tool.vulture]
 ignore_names = [
-    # TypedDict keys are read by subscript and from JSON files
-    "objectName", "ratingValue", "prediction", "releaseDate", "ratingAction",
-    "releaseUrl",
     # public API fields read by scripts outside src
     "files",
 ]
