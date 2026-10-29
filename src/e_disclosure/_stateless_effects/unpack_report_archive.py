@@ -7,7 +7,7 @@ from toolkit.boolean import ensure
 from e_disclosure._entities.downloaded_file import DownloadedFile
 
 
-def unpack_pdfs(file: DownloadedFile) -> list[DownloadedFile]:
+def unpack_report_archive(file: DownloadedFile) -> list[DownloadedFile]:
     """PDF любой вложенности из архива ``.zip`` или ``.rar``; иной файл как есть."""
     with tempfile.TemporaryDirectory(prefix="e-disclosure-") as tmp:
         archive = Path(tmp) / file.name

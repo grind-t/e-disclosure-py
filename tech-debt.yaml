@@ -83,7 +83,7 @@
     unzip и 7z пишут прогресс распаковки в тот же stdout, где pull_report
     отдаёт машиночитаемый JSON
   defect_location: >-
-    src/e_disclosure/_stateless_effects/unpack_pdfs.py:19-23,
+    src/e_disclosure/_stateless_effects/unpack_report_archive.py:19-23,
     scripts/pull_report.py:63-72
   defect_type: Rule of Silence (Raymond, The Art of Unix Programming, 2003, ch. 1)
   defect_characteristic: Compatibility
@@ -118,7 +118,7 @@
 
 - defect_description: >-
     Имя файла из Content-Disposition используется как путь без очистки
-  defect_location: src/e_disclosure/_stateless_effects/unpack_pdfs.py:13-15
+  defect_location: src/e_disclosure/_stateless_effects/unpack_report_archive.py:13-15
   defect_type: CWE-22 Path Traversal (MITRE CWE 4.x)
   defect_characteristic: Security
   defect_subcharacteristic: Integrity
@@ -142,7 +142,7 @@
 - defect_description: >-
     Распаковка по суффиксу чувствительна к регистру и знает только .zip и
     .rar; .ZIP, .RAR, .7z сохраняются как есть
-  defect_location: src/e_disclosure/_stateless_effects/unpack_pdfs.py:17-25
+  defect_location: src/e_disclosure/_stateless_effects/unpack_report_archive.py:17-25
   defect_type: Robustness Principle (Postel, RFC 1122, 1.2.2)
   defect_characteristic: Functional Suitability
   defect_subcharacteristic: Functional Completeness
@@ -160,7 +160,7 @@
     Внешние зависимости (Chrome, unzip, 7z, ключ datalab) нигде не объявлены,
     в проекте нет README с установкой и запуском
   defect_location: >-
-    src/e_disclosure/_stateless_effects/unpack_pdfs.py,
+    src/e_disclosure/_stateless_effects/unpack_report_archive.py,
     scripts/pull_report.py:34-36, scripts/pdf_to_html.py, корень проекта
   defect_type: Twelve-Factor App, II. Dependencies (Wiggins, 12factor.net, 2011)
   defect_characteristic: Flexibility
@@ -241,7 +241,7 @@
       severity: Minor
 
 - defect_description: >-
-    Тестами покрыты только workflow и unpack_pdfs; parse_report_row,
+    Тестами покрыты только workflow и unpack_report_archive; parse_report_row,
     parse_company_id, export_file_names и export_ratings не тестируются
   defect_location: >-
     tests/,

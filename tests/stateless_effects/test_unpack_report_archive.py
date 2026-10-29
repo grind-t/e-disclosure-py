@@ -4,7 +4,7 @@ import zipfile
 import pytest
 
 from e_disclosure._entities.downloaded_file import DownloadedFile
-from e_disclosure._stateless_effects.unpack_pdfs import unpack_pdfs
+from e_disclosure._stateless_effects.unpack_report_archive import unpack_report_archive
 
 
 def _zip(entries: dict[str, bytes]) -> DownloadedFile:
@@ -24,7 +24,7 @@ def test_archive_yields_pdfs_at_any_depth() -> None:
         }
     )
 
-    assert unpack_pdfs(archive) == [
+    assert unpack_report_archive(archive) == [
         DownloadedFile(name="top.pdf", body=b"top"),
         DownloadedFile(name="nested.PDF", body=b"nested"),
     ]
@@ -32,4 +32,4 @@ def test_archive_yields_pdfs_at_any_depth() -> None:
 
 def test_archive_without_pdfs_is_rejected() -> None:
     with pytest.raises(ValueError, match="No PDF"):
-        unpack_pdfs(_zip({"readme.txt": b"skip"}))
+        unpack_report_archive(_zip({"readme.txt": b"skip"}))
