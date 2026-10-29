@@ -342,6 +342,7 @@ name = "grind-t-e-disclosure"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "grind-t-toolkit" },
     { name = "patchright" },
 ]
 
@@ -360,7 +361,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "patchright", specifier = ">=1.63.0" }]
+requires-dist = [
+    { name = "grind-t-toolkit", specifier = ">=0.2.0" },
+    { name = "patchright", specifier = ">=1.63.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -383,6 +387,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/09/af/f4cb7062d8a017d12303f2b86b681768bf85bd672125161087b5a743c265/grind_t_lint_rules-0.4.0.tar.gz", hash = "sha256:cfccee3fe867910b2b59fb404ee3e4a345624ef06a788f8e161555c321670e9f", size = 10811, upload-time = "2026-10-21T19:10:34.082Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/df/63903355d4bed2a93c4972cec1f5918fe873bd6a5b4152068c00b6952c7a/grind_t_lint_rules-0.4.0-py3-none-any.whl", hash = "sha256:53338eb77b8db91d2a7d20d20ac82554a790424a56f61d9ffd698038f91ab647", size = 28678, upload-time = "2026-10-21T19:10:32.979Z" },
+]
+
+[[package]]
+name = "grind-t-toolkit"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/84/5c816a8e8c2968ea04679948c9bcdf566e0532d348207655793cdc5a8217/grind_t_toolkit-0.2.0.tar.gz", hash = "sha256:d4266d1dd0dcd744ea12319e377b4d5651a0b004ecdacdac0ed1ecb9d1cc6566", size = 1821, upload-time = "2026-10-24T16:40:04.998Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/c1/531b12149c869d9daeb0b1af82349721c6cc711f197ec9d207087a7a68c3/grind_t_toolkit-0.2.0-py3-none-any.whl", hash = "sha256:c25eb239e980f00552a269b4edbbbd453247e5d98a628a77c1e58337eeb04854", size = 3343, upload-time = "2026-10-24T16:40:03.587Z" },
 ]
 
 [[package]]
