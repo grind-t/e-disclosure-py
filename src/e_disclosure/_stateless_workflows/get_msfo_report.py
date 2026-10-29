@@ -17,7 +17,7 @@ async def get_msfo_report(
     find_company_by_inn: Callable[[str], Awaitable[Company | None]],
     list_reports: Callable[[str, ReportType], Awaitable[list[Report]]],
     download_file: Callable[[str], Awaitable[DownloadedFile]],
-    unpack_files: Callable[[DownloadedFile], list[DownloadedFile]],
+    unpack_pdfs: Callable[[DownloadedFile], list[DownloadedFile]],
 ) -> MsfoReport | None:
     """Последний МСФО-отчёт компании, или последний за ``period``, если он задан."""
     company = await find_company_by_inn(inn)
@@ -38,5 +38,5 @@ async def get_msfo_report(
         company_id=company.id,
         type=report_type,
         period=report.period,
-        files=unpack_files(await download_file(report.download_url)),
+        files=unpack_pdfs(await download_file(report.download_url)),
     )

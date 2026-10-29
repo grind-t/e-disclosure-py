@@ -62,26 +62,6 @@
       severity: Major
 
 - defect_description: >-
-    Из архива берутся только файлы верхнего уровня; если отчёт лежит в
-    папке внутри архива, список файлов пуст, а pull_report сообщает об успехе
-  defect_location: >-
-    src/e_disclosure/_stateless_effects/unpack_files.py:25-29,
-    scripts/pull_report.py:59-72
-  defect_type: Fail-fast (Shore, «Fail Fast», IEEE Software, 2004)
-  defect_characteristic: Functional Suitability
-  defect_subcharacteristic: Functional Completeness
-  defect_risks:
-    most_likely:
-      event: >-
-        Компания выкладывает архив с отчётом во вложенной папке
-      consequence: >-
-        Скрипт печатает JSON об успешной загрузке, но в exports ничего не
-        появляется; maintainer тратит время на поиск причины или считает
-        отчёт скачанным
-      likelihood: Medium
-      severity: Major
-
-- defect_description: >-
     Методика перевода на национальную шкалу (acra-mapping.pdf) исключена из
     репозитория, а навык ссылается на неё как на обязательный источник
   defect_location: >-
@@ -103,7 +83,7 @@
     unzip и 7z пишут прогресс распаковки в тот же stdout, где pull_report
     отдаёт машиночитаемый JSON
   defect_location: >-
-    src/e_disclosure/_stateless_effects/unpack_files.py:17-21,
+    src/e_disclosure/_stateless_effects/unpack_pdfs.py:19-23,
     scripts/pull_report.py:63-72
   defect_type: Rule of Silence (Raymond, The Art of Unix Programming, 2003, ch. 1)
   defect_characteristic: Compatibility
@@ -138,7 +118,7 @@
 
 - defect_description: >-
     Имя файла из Content-Disposition используется как путь без очистки
-  defect_location: src/e_disclosure/_stateless_effects/unpack_files.py:11-13
+  defect_location: src/e_disclosure/_stateless_effects/unpack_pdfs.py:13-15
   defect_type: CWE-22 Path Traversal (MITRE CWE 4.x)
   defect_characteristic: Security
   defect_subcharacteristic: Integrity
@@ -162,7 +142,7 @@
 - defect_description: >-
     Распаковка по суффиксу чувствительна к регистру и знает только .zip и
     .rar; .ZIP, .RAR, .7z сохраняются как есть
-  defect_location: src/e_disclosure/_stateless_effects/unpack_files.py:15-23
+  defect_location: src/e_disclosure/_stateless_effects/unpack_pdfs.py:17-25
   defect_type: Robustness Principle (Postel, RFC 1122, 1.2.2)
   defect_characteristic: Functional Suitability
   defect_subcharacteristic: Functional Completeness
@@ -180,7 +160,7 @@
     Внешние зависимости (Chrome, unzip, 7z, ключ datalab) нигде не объявлены,
     в проекте нет README с установкой и запуском
   defect_location: >-
-    src/e_disclosure/_stateless_effects/unpack_files.py,
+    src/e_disclosure/_stateless_effects/unpack_pdfs.py,
     scripts/pull_report.py:34-36, scripts/pdf_to_html.py, корень проекта
   defect_type: Twelve-Factor App, II. Dependencies (Wiggins, 12factor.net, 2011)
   defect_characteristic: Flexibility
@@ -261,10 +241,10 @@
       severity: Minor
 
 - defect_description: >-
-    Тестами покрыт только workflow; unpack_files, parse_report_row,
+    Тестами покрыты только workflow и unpack_pdfs; parse_report_row,
     parse_company_id, export_file_names и export_ratings не тестируются
   defect_location: >-
-    tests/, src/e_disclosure/_stateless_effects/unpack_files.py,
+    tests/,
     src/e_disclosure/_stateless_computations/, scripts/
   defect_type: Test Pyramid (Cohn, Succeeding with Agile, 2009)
   defect_characteristic: Maintainability

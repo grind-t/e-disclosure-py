@@ -7,7 +7,7 @@ from e_disclosure._entities.report_type import ReportType
 from e_disclosure._stateless_effects.download_file import download_file
 from e_disclosure._stateless_effects.find_company_by_inn import find_company_by_inn
 from e_disclosure._stateless_effects.list_reports import list_reports
-from e_disclosure._stateless_effects.unpack_files import unpack_files
+from e_disclosure._stateless_effects.unpack_pdfs import unpack_pdfs
 from e_disclosure._stateless_workflows.get_msfo_report import (
     get_msfo_report as _get_msfo_report,
 )
@@ -27,7 +27,7 @@ async def get_msfo_report(
         find_company_by_inn=partial(find_company_by_inn, page),
         list_reports=partial(list_reports, page),
         download_file=partial(download_file, page),
-        unpack_files=unpack_files,
+        unpack_pdfs=unpack_pdfs,
     )
 
 
